@@ -1,0 +1,26 @@
+version: "3.4"
+volumes:
+  alert_redis:
+services:
+  redis:
+    image: "redis:alpine"
+    command: ["redis-server", "--appendonly", "yes", "--logfile", "/tmp/redis-server.log"]
+    volumes:
+      - alert_redis:/data
+  alert:
+    build:
+      target: builder
+      context: .
+    env_file:
+      - .env
+    depends_on:
+      - redis
+    command:
+      - "/tmp/wait-for-db.sh"
+      - "redis:6379"
+      - --
+      - "refresh"
+      - "-c"
+      - "refresh.yml"
+    volumes:
+      - ${PWD}:/opt/alert
